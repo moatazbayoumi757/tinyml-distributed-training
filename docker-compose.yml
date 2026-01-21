@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  part1:
+    build: .
+    container_name: part1
+    command: part1_container.py
+    volumes:
+      - ./checkpoints:/workspace/models
+    environment:
+      - RANK=0
+      - WORLD_SIZE=2
+      - MASTER_ADDR=part1
+      - MASTER_PORT=29500
+    networks:
+      - net
+    deploy:
+      resources:
+        limits:
+          cpus: '10.0'
+          memory: 16G
+
+  part2:
+    build: .
+    container_name: part2
+    command: part2_container.py
+    volumes:
+      - ./checkpoints:/workspace/models
+    environment:
+      - RANK=1
+      - WORLD_SIZE=2
+      - MASTER_ADDR=part1
+      - MASTER_PORT=29500
+    networks:
+      - net
+    deploy:
+      resources:
+        limits:
+          cpus: '10.0'
+          memory: 16G
+
+  test:
+    build: .
+    container_name: test
+    command: test_container.py
+    volumes:
+      - ./checkpoints:/workspace/models
+    networks:
+      - net
+    depends_on:
+      - part1
+      - part2
+
+networks:
+  net:
+    driver: bridge
